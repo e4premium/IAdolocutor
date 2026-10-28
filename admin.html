@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Usuários · IA do Locutor</title><link rel="icon" type="image/png" href="/logo-sm.png">
+<style>
+:root{--bg:#0f1117;--p1:#181b24;--p2:#1f2330;--bd:#2b3040;--tx:#e8ebf2;--mut:#8a92a6;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#1b2340 0,var(--bg) 60%);color:var(--tx);font:15px/1.5 system-ui,sans-serif;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;border-bottom:1px solid var(--bd)}
+header img{height:56px}main{max-width:900px;margin:22px auto;padding:0 18px;display:grid;gap:18px}
+.panel{background:linear-gradient(var(--p2),var(--p1));border:1px solid var(--bd);border-radius:16px;padding:18px;box-shadow:0 12px 30px #0006}
+h2{margin:0 0 12px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:#0b0d13;color:var(--tx)}
+.btn{--c1:#5b9bff;--c2:#2f6bef;--sh:#1b3f93;border:0;border-radius:10px;padding:9px 14px;font:700 13px inherit;color:#fff;cursor:pointer;text-decoration:none;display:inline-block;
+ background:linear-gradient(var(--c1),var(--c2));box-shadow:0 4px 0 var(--sh),0 8px 12px #0007,inset 0 1px 0 #fff5;transition:transform .07s,box-shadow .07s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--sh),inset 0 1px 0 #fff4}
+.gray{--c1:#4a5268;--c2:#353b4e;--sh:#1e2230}.green{--c1:#34d27b;--c2:#16a34a;--sh:#0c6a2e}.red{--c1:#ef5b5b;--c2:#c92a2a;--sh:#7d1414}
+table{width:100%;border-collapse:collapse}td,th{padding:10px 6px;border-top:1px solid var(--bd);text-align:left;font-size:14px}th{color:var(--mut);font-size:12px;border:0}
+td:last-child{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11px;background:#2f6bef33;color:#8db4ff;padding:2px 8px;border-radius:20px}
+#msg{font-size:13px;margin-top:10px;min-height:18px}.er{color:#ff7b7b}.ok{color:#5be08e}.w{overflow-x:auto}
+</style></head><body>
+<header><img src="/logo.png" alt=""><a class="btn gray" href="/">← Voltar ao painel</a></header>
+<main>
+<section class="panel"><h2>Novo usuário</h2>
+<div class="f"><div><label>Usuário</label><input id="n" placeholder="ex: joao" autocomplete="off"></div>
+<div><label>Senha (mín. 6)</label><input id="s" type="text" autocomplete="off"></div>
+<div><label>Créditos (0 = ilimitado)</label><input id="l" type="number" min="0" value="0"></div>
+<div><label><input id="a" type="checkbox" style="width:auto"> Administrador</label><button class="btn green" id="c" style="margin-top:6px">Criar</button></div></div>
+<div id="msg"></div></section>
+<section class="panel"><h2>Usuários</h2><div class="w"><table><thead><tr><th>Usuário</th><th>Créditos</th><th></th></tr></thead><tbody id="tb"></tbody></table></div></section>
+</main><script>
+const $=i=>document.getElementById(i);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const msg=(t,ok)=>{$('msg').className=ok?'ok':'er';$('msg').textContent=t};
+async function post(b){const r=await fetch('/api/usuarios',{method:'POST',body:JSON.stringify(b)});if(r.status===401)location.reload();const j=await r.json();if(!r.ok){msg(j.erro);return false}return true}
+async function lista(){
+ const us=await (await fetch('/api/usuarios')).json();
+ $('tb').innerHTML=us.map(u=>`<tr><td><b>${esc(u.email||u.nome)}</b> ${u.admin?'<span class="tag">admin</span>':''}${u.pendente?' <span class="tag" style="background:#f59e0b33;color:#fbbf24">pendente</span>':''}</td>
+ <td>${u.limite?'Restam '+Math.max(0,u.limite-u.usados)+' de '+u.limite:u.usados+' usados (ilimitado)'}</td>
+ <td>${u.pendente?`<button class="btn green" data-a="aprovar" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Aprovar</button>`:''}<button class="btn gray" data-a="zerar" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Renovar créditos</button><button class="btn gray" data-a="limite" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Definir créditos</button><button class="btn gray" data-a="senha" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Senha</button><button class="btn red" data-a="excluir" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Excluir</button></td></tr>`).join('');
+}
+$('tb').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const nome=b.dataset.n,ver=b.dataset.e||nome,acao=b.dataset.a,o={acao,nome};
+ if(acao==='limite'){const v=prompt('Novo total de créditos para '+ver+' (0 = ilimitado):');if(v===null)return;o.limite=v}
+ if(acao==='senha'){const v=prompt('Nova senha para '+ver+' (mínimo 6):');if(!v)return;o.senha=v}
+ if(acao==='excluir'&&!confirm('Excluir o usuário '+ver+'?'))return;
+ if(await post(o)){msg('Feito.',1);lista()}};
+$('c').onclick=async()=>{if(await post({acao:'criar',nome:$('n').value,senha:$('s').value,limite:$('l').value,admin:$('a').checked})){msg('Usuário criado.',1);$('n').value=$('s').value='';lista()}};
+lista();
+</script></body></html>

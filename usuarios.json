@@ -1,0 +1,21 @@
+{
+  "admin": {
+    "salt": "7b5597167c9e963e47c85002dca5f564",
+    "hash": "4d3202c4c7af20b329e01d9d171e3e8180d203d5bc9066f802e2b14a87fcd685",
+    "admin": true,
+    "limite": 0,
+    "usados": 0,
+    "criado": "2026-10-28T20:07:16.184Z"
+  },
+  "u86dcf46366fa": {
+    "salt": "be32017be4fb90bad79b7de8015681dd",
+    "hash": "9e6d53bf71e51cf1839dff557df6e5ec9e279375de09a4bb5f3d9ecf52f190d3",
+    "admin": false,
+    "limite": 500,
+    "usados": 484,
+    "criado": "2026-10-28T21:52:04.614Z",
+    "email": "edilson.silva.design@gmail.com",
+    "nome": "edilson.silva.design",
+    "pendente": false
+  }
+}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IA do Locutor</title><link rel="icon" type="image/png" href="/logo-sm.png">
+<style>
+:root{--bg:#0f1117;--card:#1f2330;--tx:#e8ebf2;--bd:#2b3040;--mut:#8a92a6;color-scheme:dark}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(1000px 500px at 20% -10%,#1b2340 0,var(--bg) 60%);color:var(--tx);font-family:system-ui,sans-serif}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:24px;width:min(340px,92vw)}
+.tabs{display:flex;gap:6px;background:#0b0d13;padding:4px;border-radius:10px;margin-bottom:6px}
+.tabs button{flex:1;margin:0;padding:8px;border:0;background:transparent;color:var(--mut);box-shadow:none;border-radius:8px;font-weight:600}
+.tabs button.on{background:#2b3040;color:var(--tx)}
+input,.go{width:100%;padding:11px;border-radius:10px;font-size:15px;box-sizing:border-box;margin-top:10px}
+input{border:1px solid var(--bd);background:#0b0d13;color:var(--tx)}
+.go{margin-top:16px;border:0;background:linear-gradient(#5b9bff,#2f6bef);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 5px 0 #1b3f93,0 10px 16px #0006,inset 0 1px 0 #fff5;transition:transform .07s,box-shadow .07s}
+.go:active{transform:translateY(4px);box-shadow:0 1px 0 #1b3f93}
+#m{font-size:13px;margin-top:10px;min-height:16px;color:#ff7b7b}#m.ok{color:#5be08e}
+</style></head><body><div class="c">
+<img src="/logo.png" alt="IA do Locutor" style="display:block;width:170px;margin:0 auto 10px;filter:drop-shadow(0 0 14px #2f6bef88)">
+<div class="tabs" id="tabs" style="display:none"><button id="t1" class="on">Entrar</button><button id="t2">Criar conta</button></div>
+<div id="f1"><input id="u" placeholder="E-mail ou usuário" autocomplete="username" autofocus><input id="s" type="password" placeholder="Senha" autocomplete="current-password"><button class="go" id="b1">Entrar</button></div>
+<div id="f2" style="display:none"><input id="re" type="email" placeholder="Seu e-mail" autocomplete="email"><input id="rs" type="password" placeholder="Crie uma senha (mín. 6)" autocomplete="new-password"><input id="rs2" type="password" placeholder="Repita a senha" autocomplete="new-password"><button class="go" id="b2">Criar conta</button></div>
+<div id="m"></div></div>
+<script>
+const $=i=>document.getElementById(i),msg=(t,ok)=>{$('m').className=ok?'ok':'';$('m').textContent=t};
+const aba=n=>{$('f1').style.display=n==1?'':'none';$('f2').style.display=n==2?'':'none';$('t1').className=n==1?'on':'';$('t2').className=n==2?'on':'';msg('')};
+$('t1').onclick=()=>aba(1);$('t2').onclick=()=>aba(2);
+fetch('/api/config').then(r=>r.json()).then(c=>{if(c.cadastro)$('tabs').style.display='flex'});
+const post=async(u,b)=>{const r=await fetch(u,{method:'POST',body:JSON.stringify(b)});return[r,await r.json()]};
+const entrar=async()=>{const[r,j]=await post('/api/login',{usuario:$('u').value,senha:$('s').value});r.ok?location.reload():msg(j.erro)};
+const criar=async()=>{if($('rs').value!==$('rs2').value)return msg('As senhas não são iguais');
+ const[r,j]=await post('/api/cadastro',{email:$('re').value,senha:$('rs').value});
+ if(!r.ok)return msg(j.erro);if(j.pendente){aba(1);msg('Conta criada! Aguarde a aprovação do administrador.',1)}else location.reload()};
+$('b1').onclick=entrar;$('b2').onclick=criar;
+$('s').onkeydown=k=>{if(k.key==='Enter')entrar()};$('u').onkeydown=k=>{if(k.key==='Enter')$('s').focus()};$('rs2').onkeydown=k=>{if(k.key==='Enter')criar()};
+</script></body></html>
