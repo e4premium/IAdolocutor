@@ -340,6 +340,17 @@ async function boot() {
     if (!SENHA || SENHA.length < 6) { console.error('Primeiro uso: defina SENHA_ACESSO (minimo 6 caracteres). Ela sera a senha do usuario "admin".'); process.exit(1); }
     criar('admin', SENHA, 0, true); await lojaU.flush(); console.log('Usuario "admin" criado com a senha de SENHA_ACESSO.');
   }
+  // Redefinicao de emergencia: com RESET_ADMIN=sim no Render, a senha do "admin" volta a ser a de SENHA_ACESSO.
+  // Depois de entrar, APAGUE a variavel RESET_ADMIN, senao a senha e redefinida a cada reinicio.
+  if (cfg('RESET_ADMIN') === 'sim' && SENHA.length >= 6) {
+    if (U.admin) {
+      U.admin.salt = crypto.randomBytes(16).toString('hex');
+      U.admin.hash = mkhash(SENHA, U.admin.salt);
+      U.admin.admin = true; delete U.admin.pendente;
+    } else criar('admin', SENHA, 0, true);
+    await salvarU(); await lojaU.flush();
+    console.log('Senha do admin redefinida a partir de SENHA_ACESSO.');
+  }
 }
 boot().then(() => servidor.listen(PORT, '0.0.0.0', () => console.log('Sistema TTS rodando na porta ' + PORT)))
   .catch(e => { console.error('Falha ao iniciar:', e.message); process.exit(1); });
