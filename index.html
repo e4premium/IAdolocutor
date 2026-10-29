@@ -98,7 +98,15 @@ const $=i=>document.getElementById(i);
 $('wave').innerHTML=Array.from({length:40},(_,i)=>`<span style="animation-delay:${(i%8)*.1}s;height:${20+Math.abs(Math.sin(i))*60}%"></span>`).join('');
 [0.8,1,1.2,1.5].forEach(v=>{const b=document.createElement('button');b.className='btn gray sm chip';b.textContent=v+'x';b.onclick=()=>{$('s').value=v;upd()};$('presets').appendChild(b)});
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const item=(h,novo,tag)=>`<div class="item${novo?' new':''}"><p>${tag?'<b>'+tag+'</b> · ':''}${esc(h.texto)||h.arquivo}</p><div class="r"><audio controls src="/saidas/${h.arquivo}"></audio><a class="btn sm" href="/saidas/${h.arquivo}" download>⬇</a></div></div>`;
+/* nome amigável no download: VOZ - primeiras palavras do texto - data e hora.mp3 */
+function dlNome(h){
+ const p=h.arquivo.replace(/\.mp3$/i,'').split('_'),ts=+p[1],voz=(p.slice(2).join('_')||'voz').toUpperCase();
+ const d=new Date(ts),z=n=>String(n).padStart(2,'0');
+ const data=isNaN(d)?'':` ${z(d.getDate())}-${z(d.getMonth()+1)}-${d.getFullYear()} ${z(d.getHours())}h${z(d.getMinutes())}`;
+ const frase=(h.texto||'').replace(/[\\/:*?"<>|\[\]\r\n]+/g,' ').trim().split(/\s+/).slice(0,4).join(' ');
+ return voz+(frase?' - '+frase:'')+data+'.mp3';
+}
+const item=(h,novo,tag)=>`<div class="item${novo?' new':''}"><p>${tag?'<b>'+tag+'</b> · ':''}${esc(h.texto)||h.arquivo}</p><div class="r"><audio controls src="/saidas/${h.arquivo}"></audio><a class="btn sm" href="/saidas/${h.arquivo}" download="${esc(dlNome(h))}">⬇</a></div></div>`;
 function upd(){const s=+$('s').value;$('sv').textContent=s.toFixed(2)+'x';$('vv').textContent=$('vol').value+' dB';
  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',parseFloat(c.textContent)===s))}
 async function eu(){const j=await (await api('/api/eu')).json();$('eu').textContent=j.usuario+(j.limite?' · '+Math.max(0,j.limite-j.usados)+' créditos':'');$('adm').style.display=j.admin?'inline-block':'none';meuNome=j.usuario;$('comprar').style.display=j.limite?'inline-block':'none'}
