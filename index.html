@@ -45,6 +45,10 @@ body{overflow-x:hidden}
 main>*,aside>*{min-width:0}
 aside{grid-template-columns:minmax(0,1fr)}
 .item{min-width:0;overflow:hidden}
+/* Abas de locutores */
+.tabs{display:flex;gap:8px;margin-bottom:10px}
+.tab{flex:1;padding:10px 8px;font-size:13px;border-radius:10px}
+.tab.on{--c1:#5b9bff;--c2:#2f6bef;--sh:#1b3f93}
 /* Demonstração da voz */
 .demo{display:none;margin-top:12px;padding:12px;background:#0b0d13;border:1px solid var(--bd);border-radius:12px;box-shadow:inset 0 2px 6px #0008}
 .demo.on{display:block}
@@ -74,7 +78,9 @@ aside{grid-template-columns:minmax(0,1fr)}
 </section>
 <aside style="display:grid;gap:18px;align-content:start">
  <div class="panel"><h2>Ajustes</h2>
-  <label>Voz clonada</label><select id="v"></select>
+  <label>Voz clonada</label>
+  <div class="tabs" id="tabs"></div>
+  <select id="v"></select>
   <div class="demo" id="demo"><b id="demoNome"></b><small>Demonstração da voz</small><audio id="demoAudio" controls preload="none"></audio></div>
   <label>Velocidade <b id="sv">1.00x</b></label><input id="s" type="range" min="0.5" max="2" step="0.05" value="1">
   <div class="chips" id="presets"></div>
@@ -109,14 +115,29 @@ function demo(){
 }
 let escolha=null;try{escolha=localStorage.getItem('voz')}catch{}
 $('v').onchange=()=>{escolha=$('v').value;try{localStorage.setItem('voz',escolha)}catch{};demo()};
+let grupos={},aba=null;
+const rotAba={masculina:'Masculina',feminina:'Feminina',outras:'Outras'},nm=f=>f.split('/').pop().replace(/\.[^.]+$/,'');
+function desenhaAba(manual){
+ const ks=['masculina','feminina','outras'].filter(g=>(grupos[g]||[]).length);
+ $('tabs').innerHTML=ks.map(g=>`<button class="btn gray sm tab${g===aba?' on':''}" data-g="${g}">${rotAba[g]}</button>`).join('');
+ $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{aba=b.dataset.g;desenhaAba(true)});
+ const lista=grupos[aba]||[];
+ $('v').innerHTML='<option value="">Voz padrão</option>'+lista.map(f=>`<option value="${esc(f)}">${esc(nm(f))}</option>`).join('');
+ // ao trocar de aba, seleciona a 1ª voz dela; senão mantém a escolha salva
+ if(manual||(escolha!==''&&!lista.includes(escolha)))escolha=lista[0]||'';
+ $('v').value=escolha;
+ try{localStorage.setItem('voz',escolha)}catch{}
+ demo();
+}
 async function carregar(){
  const vz=await (await api('/api/vozes')).json();
- const gr=Array.isArray(vz)?{outras:vz}:vz,rot={feminina:'Vozes femininas',masculina:'Vozes masculinas',outras:'Outras vozes'};
- const todas=[].concat(...Object.values(gr)),nm=f=>f.split('/').pop().replace(/\.[^.]+$/,'');
- $('v').innerHTML='<option value="">Voz padrão</option>'+Object.keys(rot).filter(g=>(gr[g]||[]).length).map(g=>`<optgroup label="${rot[g]}">`+gr[g].map(f=>`<option value="${esc(f)}">${esc(nm(f))}</option>`).join('')+'</optgroup>').join('');
- if(escolha===null)escolha=todas[0]||'';
- $('v').value=(escolha===''||todas.includes(escolha))?escolha:(todas[0]||'');
- demo();
+ grupos=Array.isArray(vz)?{outras:vz}:vz;
+ const ks=Object.keys(grupos).filter(g=>(grupos[g]||[]).length);
+ if(!aba||!(grupos[aba]||[]).length){
+  aba=ks.find(g=>(grupos[g]||[]).includes(escolha))||['masculina','feminina','outras'].find(g=>ks.includes(g))||'masculina';
+ }
+ if(escolha===null)escolha='';
+ desenhaAba(false);
  const h=await (await api('/api/historico')).json();$('hist').innerHTML=h.map(x=>item(x)).join('')||'<p class="cnt">Nenhum áudio ainda.</p>';
 }
 $('t').oninput=()=>$('n').textContent=$('t').value.length+' / 1000';
