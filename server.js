@@ -15,12 +15,17 @@ if (DATA !== __dirname && fs.existsSync(APP('vozes'))) fs.cpSync(APP('vozes'), D
 const GEN = ['feminina', 'masculina'];
 function listaVozes() {
   const o = { feminina: [], masculina: [], outras: [] };
-  for (const g of GEN) { fs.mkdirSync(D('vozes', g), { recursive: true }); o[g] = fs.readdirSync(D('vozes', g)).filter(f => AUDIO.test(f)).sort().map(f => g + '/' + f); }
-  o.outras = fs.readdirSync(D('vozes')).filter(f => AUDIO.test(f) && fs.statSync(D('vozes', f)).isFile()).sort();
-  return o;
+  const ja = fs.readdirSync(D('vozes')).map(x => x.toLowerCase());
+  for (const g of GEN) if (!ja.includes(g)) fs.mkdirSync(D('vozes', g), { recursive: true });
+  for (const d of fs.readdirSync(D('vozes'), { withFileTypes: true })) {   // aceita MASCULINA, masculina, Masculina...
+    const g = d.name.toLowerCase();
+    if (d.isDirectory() && GEN.includes(g)) o[g].push(...fs.readdirSync(D('vozes', d.name)).filter(f => AUDIO.test(f)).sort().map(f => d.name + '/' + f));
+    else if (d.isFile() && AUDIO.test(d.name)) o.outras.push(d.name);
+  }
+  o.outras.sort(); return o;
 }
 function vozOk(v) {
-  const p = String(v || '').split('/'); if (p.length > 2 || (p.length === 2 && !GEN.includes(p[0]))) return null;
+  const p = String(v || '').split('/'); if (p.length > 2 || (p.length === 2 && !GEN.includes(p[0].toLowerCase()))) return null;
   const f = p[p.length - 1]; if (f !== path.basename(f) || !AUDIO.test(f)) return null;
   return fs.existsSync(D('vozes', ...p)) ? p.join('/') : null;
 }
