@@ -5,7 +5,7 @@ try { fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/).forEa
 const cfg = (k, d = '') => process.env[k] || ENV[k] || d;
 const PORT = cfg('PORT', '3000'), API = 'https://api.fish.audio';
 const KEY = cfg('FISH_API_KEY'), MODEL = cfg('FISH_MODEL', 'drama-3'), SENHA = cfg('SENHA_ACESSO'), MAX = +cfg('MAX_CHARS', '1000');
-const ABERTO = cfg('CADASTRO', 'sim') !== 'nao', LIM_NOVOS = +cfg('LIMITE_NOVOS', '500'), APROVAR = cfg('APROVAR_NOVOS', 'nao') === 'sim';
+const ABERTO = cfg('CADASTRO', 'sim') !== 'nao', LIM_NOVOS = +cfg('LIMITE_NOVOS', '100'), APROVAR = cfg('APROVAR_NOVOS', 'nao') === 'sim';
 const DATA = cfg('DATA_DIR', __dirname);
 // ---------- compra de creditos via PIX ----------
 const PIX_CHAVE = cfg('PIX_CHAVE'), PIX_NOME = cfg('PIX_NOME', 'LOCUTOR'), PIX_CIDADE = cfg('PIX_CIDADE', 'MACAPA'), WHATS = cfg('WHATSAPP').replace(/\D/g, '');
