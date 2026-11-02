@@ -25,9 +25,7 @@ td:last-child{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11px;background
 <header><img src="/logo.png" alt=""><a class="btn gray" href="/">← Voltar ao painel</a></header>
 <main>
 <section class="panel"><h2>Resumo</h2>
-<div class="st"><div><b id="ct">0</b><span>Total de usuários</span></div>
-<div class="cl"><b id="cc">0</b><span>Clientes</span></div>
-<div class="ad"><b id="ca">0</b><span>Administradores</span></div>
+<div class="st"><div class="cl"><b id="ct">0</b><span>Total de usuários</span></div>
 <div class="pd"><b id="cp">0</b><span>Pendentes</span></div></div></section>
 <section class="panel"><h2>Novo usuário</h2>
 <div class="f"><div><label>Usuário</label><input id="n" placeholder="ex: joao" autocomplete="off"></div>
@@ -43,8 +41,8 @@ const msg=(t,ok)=>{$('msg').className=ok?'ok':'er';$('msg').textContent=t};
 async function post(b){const r=await fetch('/api/usuarios',{method:'POST',body:JSON.stringify(b)});if(r.status===401)location.reload();const j=await r.json();if(!r.ok){msg(j.erro);return false}return true}
 async function lista(){
  const us=await (await fetch('/api/usuarios')).json();
- const adm=us.filter(u=>u.admin).length,pen=us.filter(u=>u.pendente).length;
- $('ct').textContent=$('cn').textContent=us.length;$('ca').textContent=adm;$('cp').textContent=pen;$('cc').textContent=us.length-adm;
+ const cli=us.filter(u=>!u.admin);
+ $('ct').textContent=$('cn').textContent=cli.length;$('cp').textContent=cli.filter(u=>u.pendente).length;
  $('tb').innerHTML=us.map(u=>`<tr><td><b>${esc(u.email||u.nome)}</b> ${u.admin?'<span class="tag">admin</span>':''}${u.pendente?' <span class="tag" style="background:#f59e0b33;color:#fbbf24">pendente</span>':''}</td>
  <td>${u.limite?'Restam '+Math.max(0,u.limite-u.usados)+' de '+u.limite:u.usados+' usados (ilimitado)'}</td>
  <td>${u.pendente?`<button class="btn green" data-a="aprovar" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Aprovar</button>`:''}<button class="btn gray" data-a="zerar" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Renovar créditos</button><button class="btn gray" data-a="limite" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Definir créditos</button><button class="btn gray" data-a="senha" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Senha</button><button class="btn red" data-a="excluir" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Excluir</button></td></tr>`).join('');
