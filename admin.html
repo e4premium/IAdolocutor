@@ -16,17 +16,26 @@ input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);back
 .gray{--c1:#4a5268;--c2:#353b4e;--sh:#1e2230}.green{--c1:#34d27b;--c2:#16a34a;--sh:#0c6a2e}.red{--c1:#ef5b5b;--c2:#c92a2a;--sh:#7d1414}
 table{width:100%;border-collapse:collapse}td,th{padding:10px 6px;border-top:1px solid var(--bd);text-align:left;font-size:14px}th{color:var(--mut);font-size:12px;border:0}
 td:last-child{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11px;background:#2f6bef33;color:#8db4ff;padding:2px 8px;border-radius:20px}
+.st{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.st div{background:#0b0d13;border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+.st b{display:block;font-size:26px;line-height:1.1}.st span{font-size:12px;color:var(--mut)}
+.st .pd b{color:#fbbf24}.st .ad b{color:#8db4ff}.st .cl b{color:#5be08e}
 #msg{font-size:13px;margin-top:10px;min-height:18px}.er{color:#ff7b7b}.ok{color:#5be08e}.w{overflow-x:auto}
 </style></head><body>
 <header><img src="/logo.png" alt=""><a class="btn gray" href="/">← Voltar ao painel</a></header>
 <main>
+<section class="panel"><h2>Resumo</h2>
+<div class="st"><div><b id="ct">0</b><span>Total de usuários</span></div>
+<div class="cl"><b id="cc">0</b><span>Clientes</span></div>
+<div class="ad"><b id="ca">0</b><span>Administradores</span></div>
+<div class="pd"><b id="cp">0</b><span>Pendentes</span></div></div></section>
 <section class="panel"><h2>Novo usuário</h2>
 <div class="f"><div><label>Usuário</label><input id="n" placeholder="ex: joao" autocomplete="off"></div>
 <div><label>Senha (mín. 6)</label><input id="s" type="text" autocomplete="off"></div>
 <div><label>Créditos (0 = ilimitado)</label><input id="l" type="number" min="0" value="0"></div>
 <div><label><input id="a" type="checkbox" style="width:auto"> Administrador</label><button class="btn green" id="c" style="margin-top:6px">Criar</button></div></div>
 <div id="msg"></div></section>
-<section class="panel"><h2>Usuários</h2><div class="w"><table><thead><tr><th>Usuário</th><th>Créditos</th><th></th></tr></thead><tbody id="tb"></tbody></table></div></section>
+<section class="panel"><h2>Usuários (<span id="cn">0</span>)</h2><div class="w"><table><thead><tr><th>Usuário</th><th>Créditos</th><th></th></tr></thead><tbody id="tb"></tbody></table></div></section>
 </main><script>
 const $=i=>document.getElementById(i);
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -34,6 +43,8 @@ const msg=(t,ok)=>{$('msg').className=ok?'ok':'er';$('msg').textContent=t};
 async function post(b){const r=await fetch('/api/usuarios',{method:'POST',body:JSON.stringify(b)});if(r.status===401)location.reload();const j=await r.json();if(!r.ok){msg(j.erro);return false}return true}
 async function lista(){
  const us=await (await fetch('/api/usuarios')).json();
+ const adm=us.filter(u=>u.admin).length,pen=us.filter(u=>u.pendente).length;
+ $('ct').textContent=$('cn').textContent=us.length;$('ca').textContent=adm;$('cp').textContent=pen;$('cc').textContent=us.length-adm;
  $('tb').innerHTML=us.map(u=>`<tr><td><b>${esc(u.email||u.nome)}</b> ${u.admin?'<span class="tag">admin</span>':''}${u.pendente?' <span class="tag" style="background:#f59e0b33;color:#fbbf24">pendente</span>':''}</td>
  <td>${u.limite?'Restam '+Math.max(0,u.limite-u.usados)+' de '+u.limite:u.usados+' usados (ilimitado)'}</td>
  <td>${u.pendente?`<button class="btn green" data-a="aprovar" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Aprovar</button>`:''}<button class="btn gray" data-a="zerar" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Renovar créditos</button><button class="btn gray" data-a="limite" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Definir créditos</button><button class="btn gray" data-a="senha" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Senha</button><button class="btn red" data-a="excluir" data-n="${esc(u.nome)}" data-e="${esc(u.email||u.nome)}">Excluir</button></td></tr>`).join('');
