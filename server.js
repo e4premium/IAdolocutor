@@ -24,10 +24,10 @@ const D = (...p) => path.join(DATA, ...p), APP = (...p) => path.join(__dirname, 
 const AUDIO = /\.(wav|mp3|m4a|ogg|flac)$/i;
 fs.mkdirSync(D('vozes'), { recursive: true }); fs.mkdirSync(D('saidas'), { recursive: true });
 if (DATA !== __dirname && fs.existsSync(APP('vozes'))) fs.cpSync(APP('vozes'), D('vozes'), { recursive: true, force: false, errorOnExist: false });
-// locutores: vozes/feminina/*.mp3 e vozes/masculina/*.mp3 (arquivos soltos em vozes/ ficam em "outras")
-const GEN = ['feminina', 'masculina'];
+// locutores: vozes/feminina/*.mp3, vozes/masculina/*.mp3 e vozes/cantada/*.mp3 (arquivos soltos em vozes/ ficam em "outras")
+const GEN = ['feminina', 'masculina', 'cantada'];
 function listaVozes() {
-  const o = { feminina: [], masculina: [], outras: [] };
+  const o = { feminina: [], masculina: [], cantada: [], outras: [] };
   const ja = fs.readdirSync(D('vozes')).map(x => x.toLowerCase());
   for (const g of GEN) if (!ja.includes(g)) fs.mkdirSync(D('vozes', g), { recursive: true });
   for (const d of fs.readdirSync(D('vozes'), { withFileTypes: true })) {   // aceita MASCULINA, masculina, Masculina...
