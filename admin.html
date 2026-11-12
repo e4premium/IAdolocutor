@@ -34,6 +34,9 @@ td:last-child{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11px;background
 <section class="panel"><h2>Resumo</h2>
 <div class="st"><div class="cl"><b id="ct">0</b><span>Total de usuários</span></div>
 <div class="pd"><b id="cp">0</b><span>Pendentes</span></div></div></section>
+<section class="panel"><h2>Vozes (áudios das pastas)</h2>
+<p class="vz" style="margin:0 0 12px">Adicione vários áudios de uma vez em cada pasta. O nome do arquivo vira o nome da voz (ex: ALESSANDRA.mp3). Formatos: mp3, wav, m4a, ogg, flac (até 50 MB cada).</p>
+<div class="grid3" id="vg"></div></section>
 <section class="panel"><h2>Novo usuário</h2>
 <div class="f"><div><label>Usuário</label><input id="n" placeholder="ex: joao" autocomplete="off"></div>
 <div><label>Senha (mín. 6)</label><input id="s" type="text" autocomplete="off"></div>
@@ -41,9 +44,6 @@ td:last-child{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11px;background
 <div><label><input id="a" type="checkbox" style="width:auto"> Administrador</label><button class="btn green" id="c" style="margin-top:6px">Criar</button></div></div>
 <div id="msg"></div></section>
 <section class="panel"><h2>Usuários (<span id="cn">0</span>)</h2><div class="w"><table><thead><tr><th>Usuário</th><th>Créditos</th><th></th></tr></thead><tbody id="tb"></tbody></table></div></section>
-<section class="panel"><h2>Vozes (áudios das pastas)</h2>
-<p class="vz" style="margin:0 0 12px">Adicione vários áudios de uma vez em cada pasta. O nome do arquivo vira o nome da voz (ex: ALESSANDRA.mp3). Formatos: mp3, wav, m4a, ogg, flac (até 50 MB cada).</p>
-<div class="grid3" id="vg"></div></section>
 </main><script>
 const $=i=>document.getElementById(i);
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
