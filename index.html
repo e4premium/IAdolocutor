@@ -143,9 +143,9 @@ function demo(){
 let escolha=null;try{escolha=localStorage.getItem('voz')}catch{}
 $('v').onchange=()=>{escolha=$('v').value;try{localStorage.setItem('voz',escolha)}catch{};demo()};
 let grupos={},aba=null;
-const rotAba={masculina:'Masculina',feminina:'Feminina',outras:'Outras'},nm=f=>f.split('/').pop().replace(/\.[^.]+$/,'');
+const ordemAba=['masculina','feminina','cantada','outras'],rotAba={masculina:'Masculina',feminina:'Feminina',cantada:'Cantada',outras:'Outras'},nm=f=>f.split('/').pop().replace(/\.[^.]+$/,'');
 function desenhaAba(manual){
- const ks=['masculina','feminina','outras'].filter(g=>(grupos[g]||[]).length);
+ const ks=ordemAba.filter(g=>(grupos[g]||[]).length);
  $('tabs').innerHTML=ks.map(g=>`<button class="btn gray sm tab${g===aba?' on':''}" data-g="${g}">${rotAba[g]}</button>`).join('');
  $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{aba=b.dataset.g;desenhaAba(true)});
  const lista=grupos[aba]||[];
@@ -161,7 +161,7 @@ async function carregar(){
  grupos=Array.isArray(vz)?{outras:vz}:vz;
  const ks=Object.keys(grupos).filter(g=>(grupos[g]||[]).length);
  if(!aba||!(grupos[aba]||[]).length){
-  aba=ks.find(g=>(grupos[g]||[]).includes(escolha))||['masculina','feminina','outras'].find(g=>ks.includes(g))||'masculina';
+  aba=ks.find(g=>(grupos[g]||[]).includes(escolha))||ordemAba.find(g=>ks.includes(g))||'masculina';
  }
  if(escolha===null)escolha='';
  desenhaAba(false);
