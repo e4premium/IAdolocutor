@@ -270,6 +270,29 @@ const servidor = http.createServer(async (req, res) => {
     if (get && u === '/admin') return adm ? html(res, 'admin.html') : (res.writeHead(302, { Location: '/' }), res.end());
     if (get && u === '/api/eu') return json(res, 200, { usuario: U[me].nome || me, admin: adm, limite: U[me].limite, usados: U[me].usados });
     if (get && u === '/api/vozes') return json(res, 200, listaVozes());
+    if (u === '/api/admin/voz') {   // admin: enviar / apagar audios das pastas de vozes
+      if (!adm) return json(res, 403, { erro: 'Somente administrador' });
+      const q = new URL(req.url, 'http://x').searchParams;
+      if (req.method === 'POST') {
+        const g = String(q.get('pasta') || '').toLowerCase();
+        if (!GEN.includes(g)) return json(res, 400, { erro: 'Pasta inválida' });
+        const nome = path.basename(String(q.get('nome') || '')).replace(/[\\/:*?"<>|\x00-\x1f]/g, '').trim();
+        if (!AUDIO.test(nome)) return json(res, 400, { erro: 'Envie um arquivo wav, mp3, m4a, ogg ou flac' });
+        const MAXV = 50 * 1024 * 1024, partes = []; let tam = 0;
+        for await (const c of req) { tam += c.length; if (tam > MAXV) return json(res, 413, { erro: 'Arquivo maior que 50 MB' }); partes.push(c); }
+        if (!tam) return json(res, 400, { erro: 'Arquivo vazio' });
+        const real = (fs.readdirSync(D('vozes'), { withFileTypes: true }).find(d => d.isDirectory() && d.name.toLowerCase() === g) || { name: g }).name;
+        fs.mkdirSync(D('vozes', real), { recursive: true });
+        fs.writeFileSync(D('vozes', real, nome), Buffer.concat(partes));
+        return json(res, 200, { ok: true, arquivo: real + '/' + nome });
+      }
+      if (req.method === 'DELETE') {
+        const rel = vozOk(String(q.get('arq') || ''));
+        if (!rel || rel.split('/').length !== 2) return json(res, 400, { erro: 'Arquivo inválido' });
+        fs.unlinkSync(D('vozes', ...rel.split('/')));
+        return json(res, 200, { ok: true });
+      }
+    }
     if (get && u === '/api/historico')
       return json(res, 200, fs.readdirSync(D('saidas')).filter(f => f.startsWith(me + '_') && f.endsWith('.mp3')).sort().reverse().slice(0, 50)
         .map(f => ({ arquivo: f, texto: fs.existsSync(D('saidas', f + '.txt')) ? fs.readFileSync(D('saidas', f + '.txt'), 'utf8') : '' })));
