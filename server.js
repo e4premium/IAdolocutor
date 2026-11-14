@@ -141,6 +141,28 @@ function liberar(p, transacao) {
   return true;
 }
 
+// ---------- locutores novos: data de cadastro (amarelo por 7 dias no site) ----------
+// Guarda a data em que cada voz apareceu pela 1a vez. Na 1a execucao as vozes que ja existem ficam com data 0 (antigas).
+const datasPath = D('vozes', 'datas.json'); let datasV = {}, datasOk = false;
+const salvarDatas = async () => {
+  try { if (!FB) fs.writeFileSync(datasPath, JSON.stringify(datasV, null, 2)); else await fbSet('config', 'vozes_datas', JSON.stringify(datasV)); }
+  catch (e) { console.error('datas das vozes:', e.message); }
+};
+async function datasVozes() {
+  if (!datasOk) {
+    try {
+      const t = FB ? await fbGet('config', 'vozes_datas') : (fs.existsSync(datasPath) ? fs.readFileSync(datasPath, 'utf8') : null);
+      if (t) datasV = JSON.parse(t);
+      datasOk = true;
+    } catch (e) { console.error('datas das vozes:', e.message); return {}; }   // nao sobrescreve o registro se a leitura falhou
+  }
+  const primeira = !Object.keys(datasV).length; let mudou = false;
+  for (const f of [].concat(...Object.values(listaVozes()))) if (!(f in datasV)) { datasV[f] = primeira ? 0 : Date.now(); mudou = true; }
+  if (mudou) await salvarDatas();
+  return datasV;
+}
+async function marcarNova(rel) { await datasVozes(); datasV[rel] = Date.now(); await salvarDatas(); }
+
 // ---------- voz ----------
 const cachePath = D('vozes', 'cache.json');
 const cache = {};
@@ -270,6 +292,7 @@ const servidor = http.createServer(async (req, res) => {
     if (get && u === '/admin') return adm ? html(res, 'admin.html') : (res.writeHead(302, { Location: '/' }), res.end());
     if (get && u === '/api/eu') return json(res, 200, { usuario: U[me].nome || me, admin: adm, limite: U[me].limite, usados: U[me].usados });
     if (get && u === '/api/vozes') return json(res, 200, listaVozes());
+    if (get && u === '/api/vozes-datas') return json(res, 200, await datasVozes());
     if (u === '/api/admin/voz') {   // admin: enviar / apagar audios das pastas de vozes
       if (!adm) return json(res, 403, { erro: 'Somente administrador' });
       const q = new URL(req.url, 'http://x').searchParams;
@@ -284,6 +307,7 @@ const servidor = http.createServer(async (req, res) => {
         const real = (fs.readdirSync(D('vozes'), { withFileTypes: true }).find(d => d.isDirectory() && d.name.toLowerCase() === g) || { name: g }).name;
         fs.mkdirSync(D('vozes', real), { recursive: true });
         fs.writeFileSync(D('vozes', real, nome), Buffer.concat(partes));
+        await marcarNova(real + '/' + nome);
         return json(res, 200, { ok: true, arquivo: real + '/' + nome });
       }
       if (req.method === 'DELETE') {
@@ -377,6 +401,7 @@ async function boot() {
     if (!fs.existsSync(sp)) fs.writeFileSync(sp, crypto.randomBytes(32).toString('hex'));
     SEG = fs.readFileSync(sp, 'utf8').trim();
   }
+  await datasVozes();   // registra as vozes novas que entraram na pasta desde a ultima vez
   if (cfg('RESETAR_ADMIN') === 'sim' && SENHA.length >= 6) { // recuperacao: redefine a senha do admin para o valor de SENHA_ACESSO
     if (Object.hasOwn(U, 'admin')) {
       const salt = crypto.randomBytes(16).toString('hex');
